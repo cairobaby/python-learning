@@ -4,3 +4,6 @@ __pycache__/
 
 # VS Code 设置
 .vscode/
+
+# 虚拟环境
+.venv/
