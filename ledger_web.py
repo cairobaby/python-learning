@@ -9,7 +9,11 @@ import os
 import datetime
 
 app = Flask(__name__)
-FILE = "records.json"          # 和第十三课同一个数据文件
+# ❌ 原写法：FILE = "records.json"   # 相对路径 = 从"程序运行目录"找文件
+#   本地运行没问题，但部署到网上时运行目录和代码目录不一致 → 读不到数据
+# ✅ 正确写法：用"代码文件所在目录"定位数据文件（不管在哪运行都能找到）
+BASE = os.path.dirname(os.path.abspath(__file__))   # 这个 .py 文件所在的文件夹
+FILE = os.path.join(BASE, "records.json")           # 拼出完整路径
 
 # ① 数据层：和第十三课完全一样的两个函数
 def load():
@@ -78,7 +82,9 @@ def budget():
     records = load()
     total = sum(r["金额"] for r in records)
     try:
-        with open("budget.txt", "r", encoding="utf-8") as f:
+        # ❌ 原写法：open("budget.txt")   相对路径，部署时同样找不到
+        # ✅ 正确写法：和 records.json 一样用 BASE 定位
+        with open(os.path.join(BASE, "budget.txt"), "r", encoding="utf-8") as f:
             b = float(f.read().strip())
     except (FileNotFoundError, ValueError):
         b = 1000
