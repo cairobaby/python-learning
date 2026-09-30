@@ -4,6 +4,7 @@
 import turtle
 import random
 import time       # 帧率控制：让游戏速度正常
+import winsound   # 音效（Windows 内置库，无需安装）
 
 # ① 创建窗口
 screen = turtle.Screen()
@@ -53,6 +54,14 @@ screen.listen()                     # 开始听键盘
 score = 0
 lives = 3                       # 学霸关：3 条命（只在循环开始前初始化一次！）
 frame = 0                       # 帧计数器（开局保护用）
+
+# 升级A：读取最高分（文件不存在或内容不对就当 0）
+try:
+    with open("highscore.txt", "r", encoding="utf-8") as f:
+        highscore = int(f.read().strip())
+except (FileNotFoundError, ValueError):
+    highscore = 0
+print(f"当前最高分：{highscore}，挑战它！")
 while True:
     frame += 1
     ball.goto(ball.xcor() + ball_vx, ball.ycor() + ball_vy)   # 球移动
@@ -67,12 +76,14 @@ while True:
       # 碰到红球 → 扣一条命（和漏球一样），命没了才结束
     if frame > 30 and ball.distance(red_ball) < 20:
         lives -= 1                    # ① 扣一条命
+        winsound.Beep(300, 150)       # 扣命音效（低沉）
         if lives <= 0:                # ② 命扣完了才结束
             screen.title(f"游戏结束！得分：{score}")
             break
         ball.goto(0, 0)               # ③ 球送回中间
-        ball_vx = 3                   # ④ 重置速度
-        ball_vy = 3
+        speed = 3 + score // 5        # 按当前难度等级重生
+        ball_vx = speed * random.choice([1, -1])
+        ball_vy = speed               # 向上飞（给玩家反应时间）
         # ⑤ 红球移到新位置（防止球重生后立刻再碰到）
         while True:
             red_ball.goto(random.randint(-260, 260), random.randint(-120, 160))
@@ -91,19 +102,24 @@ while True:
 
     # 挡板接住球 → 向上反弹，得分（判定线 -145，接近挡板 -150）
     if ball.ycor() < -145 and abs(ball.xcor() - paddle.xcor()) < 60:
-        ball_vy = -ball_vy
         score += 1
+        speed = 3 + score // 5                      # 升级B：难度递增，每得5分球速+1
+        ball_vx = speed * (1 if ball_vx > 0 else -1)  # 保持方向，速度提升
+        ball_vy = -speed                            # 向上弹，速度提升
+        winsound.Beep(1000, 40)                     # 升级C：接球音效（短促高音）
         screen.title(f"接球游戏 —— 得分：{score}")
 
     # 球落地 → 扣一条命，命没了才结束（学霸关）
     if ball.ycor() < -180:
         lives -= 1                    # ① 扣一条命
+        winsound.Beep(200, 200)       # 掉命音效（低沉拉长）
         if lives <= 0:                # ② 命扣完了才结束
             screen.title(f"游戏结束！得分：{score}")
             break
         ball.goto(0, 0)               # ③ 球送回中间
-        ball_vx = 3                   # ④ 重置横向速度
-        ball_vy = 3                   # ⑤ 重置为向上飞（关键！给玩家反应时间）
+        speed = 3 + score // 5        # 按当前难度等级重生
+        ball_vx = speed * random.choice([1, -1])
+        ball_vy = speed               # 向上飞（关键！给玩家反应时间）
         screen.title(f"接球游戏 —— 得分：{score} | 剩余生命：{lives}")
 
     screen.update()   # 刷新画面（显示这一帧）——没有它窗口永远空白！
@@ -111,6 +127,16 @@ while True:
 
 
 print(f"游戏结束，得分：{score}")
+winsound.Beep(400, 400)   # 结束音效
+
+# 升级D：破纪录就写入新最高分
+if score > highscore:
+    with open("highscore.txt", "w", encoding="utf-8") as f:
+        f.write(str(score))
+    print(f"🎉 新纪录！最高分更新为：{score}")
+else:
+    print(f"最高分仍是：{highscore}")
+
 screen.bye()   # 关闭游戏窗口并退出（不再卡住）
 
 
