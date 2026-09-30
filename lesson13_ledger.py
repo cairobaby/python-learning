@@ -5,6 +5,9 @@
 import json
 import os
 import datetime
+import matplotlib.pyplot as plt
+plt.rcParams["font.sans-serif"] = ["Microsoft YaHei"]   # 中文显示
+
 
 
 FILE = "records.json"          # 数据文件
@@ -46,6 +49,7 @@ def show(records):
         total += r["金额"]
     print(f"共 {len(records)} 笔，总金额：¥{total}")
 
+
 # ⑤c 设置预算（存到单独的文件）
 def set_budget():
     try:
@@ -80,6 +84,15 @@ def stats(records):
         cats[cat] = cats.get(cat, 0) + r["金额"]
     for cat, total in cats.items():
         print(f"  {cat}：¥{total}")
+    # 把统计结果收集起来（画图备用）——必须在 for 循环外面，只执行一次
+    labels = list(cats.keys())          # 类别名列表：['餐饮', '交通', ...]
+    sizes = list(cats.values())         # 金额列表：[25.5, 8.0, ...]
+    print(f"画图数据：{labels} {sizes}")
+    # 画饼图并保存成图片
+    plt.pie(sizes, labels=labels, autopct="%1.0f%%")   # 饼图 + 百分比
+    plt.title("我的消费分类")
+    plt.savefig("消费饼图.png")     # 保存成图片文件
+    print("图表已保存：消费饼图.png")
 
 # ⑥ 删除
 def delete(records):
