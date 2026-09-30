@@ -39,6 +39,13 @@ while True:
 red_ball_vx = random.choice([-3, 3])
 red_ball_vy = random.choice([-2, 2])
 
+# 挑战A：金球（碰到 +5 分）—— 必须在循环外创建一次！和 red_ball 一样
+gold_ball = turtle.Turtle()
+gold_ball.shape("circle")
+gold_ball.color("gold")
+gold_ball.penup()
+gold_ball.goto(200, 100)
+
 # ④ 键盘控制：按 ← → 移动挡板
 def move_left():
     paddle.goto(paddle.xcor() - 30, paddle.ycor())   # 左移30
@@ -48,12 +55,26 @@ def move_right():
 
 screen.onkey(move_left, "Left")     # 绑定左箭头
 screen.onkey(move_right, "Right")   # 绑定右箭头
+
+paused = False
+
+def toggle_pause():
+    global paused
+    paused = not paused
+    if paused:
+        screen.title("游戏暂停 | 按空格继续")
+    else:
+        screen.title(f"接球游戏 —— 得分：{score} | 剩余生命：{lives}")
+
+screen.onkey(toggle_pause, "space")
 screen.listen()                     # 开始听键盘
 
 # ⑤ 游戏主循环（游戏的心跳，每帧都执行）
 score = 0
 lives = 3                       # 学霸关：3 条命（只在循环开始前初始化一次！）
 frame = 0                       # 帧计数器（开局保护用）
+
+
 
 # 升级A：读取最高分（文件不存在或内容不对就当 0）
 try:
@@ -62,7 +83,13 @@ try:
 except (FileNotFoundError, ValueError):
     highscore = 0
 print(f"当前最高分：{highscore}，挑战它！")
+screen.title(f"接球游戏 —— 最高分：{highscore}")   # 挑战C：标题一直显示最高分
 while True:
+    if paused:
+        screen.update()
+        time.sleep(0.005)
+        continue
+
     frame += 1
     ball.goto(ball.xcor() + ball_vx, ball.ycor() + ball_vy)   # 球移动
 
@@ -72,7 +99,14 @@ while True:
         red_ball_vx = -red_ball_vx
     if red_ball.ycor() > 180 or red_ball.ycor() < -180:
         red_ball_vy = -red_ball_vy
-    
+
+    # 碰到金球 → +5 分，金球换新位置（否则会无限刷分！）
+    if ball.distance(gold_ball) < 20:
+        score += 5
+        winsound.Beep(1500, 60)   # 金球音效（更高音，一听就知道是金球）
+        gold_ball.goto(random.randint(-260, 260), random.randint(-120, 160))
+        screen.title(f"接球游戏 —— 得分：{score}")
+
       # 碰到红球 → 扣一条命（和漏球一样），命没了才结束
     if frame > 30 and ball.distance(red_ball) < 20:
         lives -= 1                    # ① 扣一条命
@@ -131,6 +165,7 @@ winsound.Beep(400, 400)   # 结束音效
 
 # 升级D：破纪录就写入新最高分
 if score > highscore:
+    highscore = score                 # 关键：同时更新内存里的最高分
     with open("highscore.txt", "w", encoding="utf-8") as f:
         f.write(str(score))
     print(f"🎉 新纪录！最高分更新为：{score}")
