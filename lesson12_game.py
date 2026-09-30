@@ -1,177 +1,203 @@
-# ============ 第十二课：游戏开发入门（turtle 弹球） ============
-# 用 Python 自带的 turtle 库做"接球游戏"：键盘←→控制挡板，接住弹球
+# ============ 第十二课：游戏开发入门（turtle 弹球）v4.0 豪华版 ============
+# 功能：双球 + 闯关 + 金球 + 红球 + 暂停 + 音效 + 最高分
+# 核心新知识：用"字典列表"管理多个对象（一个球 → 批量管理所有球）
 
 import turtle
 import random
-import time       # 帧率控制：让游戏速度正常
-import winsound   # 音效（Windows 内置库，无需安装）
+import time
+import winsound
 
 # ① 创建窗口
 screen = turtle.Screen()
-screen.setup(600, 400)          # 窗口 600x400
-screen.title("接球游戏")          # 标题
-screen.tracer(0)                # 关闭自动刷新（手动刷新更快）
+screen.setup(600, 400)
+screen.title("接球游戏")
+screen.tracer(0)
 
-# ② 挡板（用海龟画一个扁长方形）
+# ② 挡板
 paddle = turtle.Turtle()
-paddle.shape("square")          # 方块形状
-paddle.shapesize(1, 5)          # 拉扁：宽是高的5倍
-paddle.penup()                  # 移动时不画线
-paddle.goto(0, -150)            # 放在底部中间
+paddle.shape("square")
+paddle.shapesize(1, 5)
+paddle.penup()
+paddle.goto(0, -150)
 
-# ③ 球（圆形）
-ball = turtle.Turtle()
-ball.shape("circle")
-ball.penup()
-ball_vx = 3                     # 球的速度：x方向（单位：像素/帧）
-ball_vy = 3                     # 球的速度：y方向
+# ③ 双球：用"字典列表"管理 —— 每个球有自己独立的龟、x速、y速
+#    字典 = 装球的各种属性；列表 = 把所有球装在一起，循环批量处理
+balls = []
+for i in range(2):                    # 创建 2 个球
+    b = turtle.Turtle()
+    b.shape("circle")
+    b.penup()
+    b.goto(-50 + i * 50, 50)          # 两个球错开出生位置
+    balls.append({
+        "turtle": b,                  # 球本身
+        "vx": 3 if i == 0 else -3,    # x 速度（方向相反，各飞一边）
+        "vy": 3 + i,                  # y 速度（略有差异，轨迹不同）
+    })
 
-# 每5秒刷新一次红球的位置
-red_ball = turtle.Turtle()
-red_ball.shape("circle")
-red_ball.color("red")
-red_ball.penup()
-# 红球初始位置：确保离球（0,0）至少 100 像素，避免开局"贴脸"直接结束
-while True:
-    red_ball.goto(random.randint(-260, 260), random.randint(-120, 160))
-    if red_ball.distance(0, 0) > 100:
-        break
-red_ball_vx = random.choice([-3, 3])
-red_ball_vy = random.choice([-2, 2])
+# ④ 红球列表（关卡越高红球越多）
+reds = []
 
-# 挑战A：金球（碰到 +5 分）—— 必须在循环外创建一次！和 red_ball 一样
+def spawn_red():
+    """创建一个红球：位置必须离所有球都远，避免开局贴脸"""
+    r = turtle.Turtle()
+    r.shape("circle")
+    r.color("red")
+    r.penup()
+    while True:
+        x = random.randint(-260, 260)
+        y = random.randint(-120, 160)
+        far = True
+        for b in balls:               # 检查所有球，只要有一个太近就重新随机
+            if b["turtle"].distance(x, y) < 100:
+                far = False
+                break
+        if far:
+            r.goto(x, y)
+            break
+    reds.append({"turtle": r, "vx": random.choice([-3, 3]), "vy": random.choice([-2, 2])})
+
+spawn_red()   # 开局 1 个红球
+
+# ⑤ 金球（+5 分）
 gold_ball = turtle.Turtle()
 gold_ball.shape("circle")
 gold_ball.color("gold")
 gold_ball.penup()
 gold_ball.goto(200, 100)
 
-# ④ 键盘控制：按 ← → 移动挡板
+# ⑥ 键盘控制
 def move_left():
-    paddle.goto(paddle.xcor() - 30, paddle.ycor())   # 左移30
+    paddle.goto(paddle.xcor() - 30, paddle.ycor())
 
 def move_right():
-    paddle.goto(paddle.xcor() + 30, paddle.ycor())   # 右移30
-
-screen.onkey(move_left, "Left")     # 绑定左箭头
-screen.onkey(move_right, "Right")   # 绑定右箭头
+    paddle.goto(paddle.xcor() + 30, paddle.ycor())
 
 paused = False
-
 def toggle_pause():
     global paused
     paused = not paused
     if paused:
         screen.title("游戏暂停 | 按空格继续")
     else:
-        screen.title(f"接球游戏 —— 得分：{score} | 剩余生命：{lives}")
+        screen.title(f"接球游戏 Lv{level} —— 得分：{score} | 剩余生命：{lives}")
 
+screen.onkey(move_left, "Left")
+screen.onkey(move_right, "Right")
 screen.onkey(toggle_pause, "space")
-screen.listen()                     # 开始听键盘
+screen.listen()
 
-# ⑤ 游戏主循环（游戏的心跳，每帧都执行）
+# ⑦ 游戏状态（循环外只初始化一次！）
 score = 0
-lives = 3                       # 学霸关：3 条命（只在循环开始前初始化一次！）
-frame = 0                       # 帧计数器（开局保护用）
+lives = 3
+frame = 0
+level = 1
 
-
-
-# 升级A：读取最高分（文件不存在或内容不对就当 0）
+# 最高分
 try:
     with open("highscore.txt", "r", encoding="utf-8") as f:
         highscore = int(f.read().strip())
 except (FileNotFoundError, ValueError):
     highscore = 0
 print(f"当前最高分：{highscore}，挑战它！")
-screen.title(f"接球游戏 —— 最高分：{highscore}")   # 挑战C：标题一直显示最高分
-while True:
+screen.title(f"接球游戏 Lv1 —— 最高分：{highscore}")
+
+# ⑧ 扣命函数：任何球碰红球/落地都调它，代码只写一遍（DRY 原则）
+def lose_life():
+    global lives
+    lives -= 1
+    winsound.Beep(200, 200)
+    if lives <= 0:
+        screen.title(f"游戏结束！得分：{score}")
+        return False                  # False = 命没了，游戏该结束
+    # 所有球一起重生（向上飞，给玩家反应时间）
+    for b in balls:
+        b["turtle"].goto(0, 0)
+        speed = 3 + score // 5
+        b["vx"] = speed * random.choice([1, -1])
+        b["vy"] = speed
+    screen.title(f"接球游戏 Lv{level} —— 得分：{score} | 剩余生命：{lives}")
+    return True                       # True = 还有命，继续玩
+
+# ⑨ 主循环
+game_over = False
+while not game_over:
     if paused:
         screen.update()
         time.sleep(0.005)
         continue
 
     frame += 1
-    ball.goto(ball.xcor() + ball_vx, ball.ycor() + ball_vy)   # 球移动
 
-    red_ball.goto(red_ball.xcor() + red_ball_vx, red_ball.ycor() + red_ball_vy)
+    # 所有球移动 + 撞墙/天花板反弹（一个循环处理两个球！）
+    for b in balls:
+        b["turtle"].goto(b["turtle"].xcor() + b["vx"], b["turtle"].ycor() + b["vy"])
+        if b["turtle"].xcor() > 280 or b["turtle"].xcor() < -280:
+            b["vx"] = -b["vx"]
+        if b["turtle"].ycor() > 180:
+            b["vy"] = -b["vy"]
 
-    if red_ball.xcor() > 280 or red_ball.xcor() < -280:
-        red_ball_vx = -red_ball_vx
-    if red_ball.ycor() > 180 or red_ball.ycor() < -180:
-        red_ball_vy = -red_ball_vy
+    # 所有红球移动 + 反弹
+    for r in reds:
+        r["turtle"].goto(r["turtle"].xcor() + r["vx"], r["turtle"].ycor() + r["vy"])
+        if r["turtle"].xcor() > 280 or r["turtle"].xcor() < -280:
+            r["vx"] = -r["vx"]
+        if r["turtle"].ycor() > 180 or r["turtle"].ycor() < -180:
+            r["vy"] = -r["vy"]
 
-    # 碰到金球 → +5 分，金球换新位置（否则会无限刷分！）
-    if ball.distance(gold_ball) < 20:
-        score += 5
-        winsound.Beep(1500, 60)   # 金球音效（更高音，一听就知道是金球）
-        gold_ball.goto(random.randint(-260, 260), random.randint(-120, 160))
-        screen.title(f"接球游戏 —— 得分：{score}")
+    # 球碰金球 → +5 分，金球换位置
+    for b in balls:
+        if b["turtle"].distance(gold_ball) < 20:
+            score += 5
+            winsound.Beep(1500, 60)
+            gold_ball.goto(random.randint(-260, 260), random.randint(-120, 160))
 
-      # 碰到红球 → 扣一条命（和漏球一样），命没了才结束
-    if frame > 30 and ball.distance(red_ball) < 20:
-        lives -= 1                    # ① 扣一条命
-        winsound.Beep(300, 150)       # 扣命音效（低沉）
-        if lives <= 0:                # ② 命扣完了才结束
-            screen.title(f"游戏结束！得分：{score}")
-            break
-        ball.goto(0, 0)               # ③ 球送回中间
-        speed = 3 + score // 5        # 按当前难度等级重生
-        ball_vx = speed * random.choice([1, -1])
-        ball_vy = speed               # 向上飞（给玩家反应时间）
-        # ⑤ 红球移到新位置（防止球重生后立刻再碰到）
-        while True:
-            red_ball.goto(random.randint(-260, 260), random.randint(-120, 160))
-            if red_ball.distance(0, 0) > 100:
+    # 球碰红球 → 扣命（开局 30 帧保护）
+    if frame > 30:
+        for b in balls:
+            for r in reds:
+                if b["turtle"].distance(r["turtle"]) < 20:
+                    game_over = not lose_life()
+                    break
+            if game_over:
                 break
-        screen.title(f"接球游戏 —— 得分：{score} | 剩余生命：{lives}")
 
+    # 挡板接住球 → 得分 + 加速
+    for b in balls:
+        if b["turtle"].ycor() < -145 and abs(b["turtle"].xcor() - paddle.xcor()) < 60:
+            score += 1
+            speed = 3 + score // 5
+            b["vx"] = speed * (1 if b["vx"] > 0 else -1)
+            b["vy"] = -speed
+            winsound.Beep(1000, 40)
+            screen.title(f"接球游戏 Lv{level} —— 得分：{score}")
 
-    # 撞左/右墙 → 反弹
-    if ball.xcor() > 280 or ball.xcor() < -280:
-        ball_vx = -ball_vx
-
-    # 撞天花板 → 反弹
-    if ball.ycor() > 180:
-        ball_vy = -ball_vy
-
-    # 挡板接住球 → 向上反弹，得分（判定线 -145，接近挡板 -150）
-    if ball.ycor() < -145 and abs(ball.xcor() - paddle.xcor()) < 60:
-        score += 1
-        speed = 3 + score // 5                      # 升级B：难度递增，每得5分球速+1
-        ball_vx = speed * (1 if ball_vx > 0 else -1)  # 保持方向，速度提升
-        ball_vy = -speed                            # 向上弹，速度提升
-        winsound.Beep(1000, 40)                     # 升级C：接球音效（短促高音）
-        screen.title(f"接球游戏 —— 得分：{score}")
-
-    # 球落地 → 扣一条命，命没了才结束（学霸关）
-    if ball.ycor() < -180:
-        lives -= 1                    # ① 扣一条命
-        winsound.Beep(200, 200)       # 掉命音效（低沉拉长）
-        if lives <= 0:                # ② 命扣完了才结束
-            screen.title(f"游戏结束！得分：{score}")
+    # 球落地 → 扣命
+    for b in balls:
+        if b["turtle"].ycor() < -180:
+            game_over = not lose_life()
             break
-        ball.goto(0, 0)               # ③ 球送回中间
-        speed = 3 + score // 5        # 按当前难度等级重生
-        ball_vx = speed * random.choice([1, -1])
-        ball_vy = speed               # 向上飞（关键！给玩家反应时间）
-        screen.title(f"接球游戏 —— 得分：{score} | 剩余生命：{lives}")
 
-    screen.update()   # 刷新画面（显示这一帧）——没有它窗口永远空白！
-    time.sleep(0.005) # 每帧停 5 毫秒：控制游戏速度，让球看得清、来得及操作
+    # 闯关：每 20 分升一级，多一个红球（最多 3 个）
+    new_level = 1 + score // 20
+    if new_level > level and len(reds) < 3:
+        level = new_level
+        spawn_red()
+        winsound.Beep(600, 300)
+        screen.title(f"🎉 升到第{level}关！红球+1，注意躲避！")
 
+    screen.update()
+    time.sleep(0.005)
 
 print(f"游戏结束，得分：{score}")
-winsound.Beep(400, 400)   # 结束音效
+winsound.Beep(400, 400)
 
-# 升级D：破纪录就写入新最高分
+# 破纪录就写入新最高分
 if score > highscore:
-    highscore = score                 # 关键：同时更新内存里的最高分
+    highscore = score
     with open("highscore.txt", "w", encoding="utf-8") as f:
         f.write(str(score))
     print(f"🎉 新纪录！最高分更新为：{score}")
 else:
     print(f"最高分仍是：{highscore}")
 
-screen.bye()   # 关闭游戏窗口并退出（不再卡住）
-
-
+screen.bye()
