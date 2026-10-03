@@ -1,30 +1,55 @@
-# ============ 第十四课第二讲：网页版记账本 ============
-# 目标：浏览器里记账！复用第十三课的数据（records.json）
-# 新知识：表单（POST）+ 接收网页数据（request.form）
-# 数据层直接复用第十三课记账本的 load/save
+# ============ 第十八课：网页版记账本升级数据库版 ============
+# 第十四课：JSON 文件存储 → 第十七课：SQLite 数据库
+# 网页 → Python → 数据库（真实软件架构）
+# 目标：表单记的每一笔直接 INSERT 进 ledger.db，查询用 SELECT
 
 from flask import Flask, request, render_template   
 import json
 import os
 import datetime
+import sqlite3                                # ← 新：数据库模块
 
 app = Flask(__name__)
 # ❌ 原写法：FILE = "records.json"   # 相对路径 = 从"程序运行目录"找文件
 #   本地运行没问题，但部署到网上时运行目录和代码目录不一致 → 读不到数据
 # ✅ 正确写法：用"代码文件所在目录"定位数据文件（不管在哪运行都能找到）
 BASE = os.path.dirname(os.path.abspath(__file__))   # 这个 .py 文件所在的文件夹
-FILE = os.path.join(BASE, "records.json")           # 拼出完整路径
+FILE = os.path.join(BASE, "records.json")           # 旧版：JSON 数据文件（保留作对照）
+DB = os.path.join(BASE, "ledger.db")                # ← 新版：数据库文件
 
-# ① 数据层：和第十三课完全一样的两个函数
+# ① 数据层（数据库版）：连接 + 建表
+def db():
+    conn = sqlite3.connect(DB)               # 连接数据库（没有就自动创建）
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL,
+        note TEXT
+    )
+    """)
+    return conn, cur
+
+# ② 读取：SELECT 全部，转成模板要的字典列表
 def load():
-    if os.path.exists(FILE):
-        with open(FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    conn, cur = db()
+    cur.execute("SELECT id, date, category, amount, note FROM records ORDER BY id")
+    rows = cur.fetchall()
+    conn.close()
+    return [{"id": r[0], "日期": r[1], "类别": r[2], "金额": r[3], "备注": r[4]} for r in rows]
 
-def save(records):
-    with open(FILE, "w", encoding="utf-8") as f:
-        json.dump(records, f, ensure_ascii=False, indent=2)
+# ❌ 旧版 JSON 的 load/save（第十四课，保留作对照）
+# def load():
+#     if os.path.exists(FILE):
+#         with open(FILE, "r", encoding="utf-8") as f:
+#             return json.load(f)
+#     return []
+#
+# def save(records):
+#     with open(FILE, "w", encoding="utf-8") as f:
+#         json.dump(records, f, ensure_ascii=False, indent=2)
 
 # ② 首页：显示表单 + 消费记录列表
 @app.route("/")
@@ -60,21 +85,33 @@ def add():
     category = request.form["category"]
     amount = float(request.form["amount"])     # 金额转数字
     note = request.form["note"]
-    # 和第十三课一模一样的"记一笔"
-    records = load()
+    # 直接 INSERT 进数据库（? 占位符防注入）
     today = datetime.date.today().strftime("%Y-%m-%d")
-    records.append({"日期": today, "类别": category, "金额": amount, "备注": note})
-    save(records)
+    conn, cur = db()
+    cur.execute("INSERT INTO records (date, category, amount, note) VALUES (?, ?, ?, ?)",
+                (today, category, amount, note))
+    conn.commit()
+    conn.close()
     return "<h1>✓ 已记录</h1><p><a href='/'>← 返回记账本</a></p>"
+    # ❌ 旧版：JSON 读改写
+    # records = load()
+    # records.append({"日期": today, "类别": category, "金额": amount, "备注": note})
+    # save(records)
 
-# ④ 挑战A：分类统计页（复用第十三课的字典累加套路）
+# ④ 分类统计页（数据库版：GROUP BY 一行搞定）
 @app.route("/stats")
 def stats():
-    records = load()
-    cats = {}
-    for r in records:
-        cats[r["类别"]] = cats.get(r["类别"], 0) + r["金额"]
+    conn, cur = db()
+    cur.execute("SELECT category, SUM(amount) FROM records GROUP BY category")
+    data = cur.fetchall()
+    conn.close()
+    cats = {cat: total for cat, total in data}    # 转成模板要的字典
     return render_template("stats.html", cats=cats)
+    # ❌ 旧版：字典累加（第十四课）
+    # records = load()
+    # cats = {}
+    # for r in records:
+    #     cats[r["类别"]] = cats.get(r["类别"], 0) + r["金额"]
 #@app.route("/stats")
 #def stats():
    # records = load()
@@ -118,6 +155,16 @@ def budget():
     except (FileNotFoundError, ValueError):
         b = 1000
     return render_template("budget.html", total=total, b=b)
+
+# ⑥ 删除：点卡片上的删除链接 → 按 id 删
+@app.route("/delete/<int:record_id>")
+def delete(record_id):
+    conn, cur = db()
+    cur.execute("DELETE FROM records WHERE id = ?", (record_id,))
+    conn.commit()
+    conn.close()
+    return "<h1>🗑️ 已删除</h1><p><a href='/'>← 返回记账本</a></p>"
+
 
 if __name__ == "__main__":
     app.run()
