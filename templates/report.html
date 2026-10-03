@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}数据分析{% endblock %}
+{% block content %}
+<h2>📊 数据分析</h2>
+<!-- 统计卡 -->
+<div style="display:flex;gap:10px;margin:10px 0;">
+  <div class="record" style="flex:1;text-align:center;"><b>总支出</b><br>¥{{ total }}</div>
+  <div class="record" style="flex:1;text-align:center;"><b>笔数</b><br>{{ count }}</div>
+  <div class="record" style="flex:1;text-align:center;"><b>平均</b><br>¥{{ "%.2f" | format(total / count if count else 0) }}</div>
+</div>
+
+<!-- 明细表格 -->
+<h3>消费明细</h3>
+<table style="width:100%;border-collapse:collapse;">
+  <tr style="background:#0a7ea4;color:white;">
+    <th>日期</th><th>类别</th><th>金额</th><th>备注</th>
+  </tr>
+  {% for r in records %}
+  <tr style="border-bottom:1px solid #eee;">
+    <td>{{ r['date'] }}</td>
+    <td>{{ r['category'] }}</td>
+    <td>¥{{ r['amount'] }}</td>
+    <td>{{ r['note'] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p>共 {{ count }} 笔，总支出 <b>¥{{ total }}</b></p>
+
+<div class="chart-box">
+  <h3>分类占比（饼图）</h3>
+  <canvas id="pieChart" style="max-width:400px;"></canvas>
+</div>
+
+<div class="chart-box">
+  <h3>每月消费（柱状图）</h3>
+  <canvas id="barChart"></canvas>
+</div>
+
+<!-- Chart.js 图表库（CDN 引入） -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+// Jinja2 的 tojson 过滤器：把 Python 字典变成 JS 对象！
+const cats = {{ cats | tojson }};
+const months = {{ months | tojson }};
+
+// 饼图：分类占比
+new Chart(document.getElementById('pieChart'), {
+  type: 'pie',
+  data: {
+    labels: Object.keys(cats),                    // 类别名
+    datasets: [{ data: Object.values(cats) }]     // 对应金额
+  }
+});
+
+// 柱状图：每月消费
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(months),
+    datasets: [{ data: Object.values(months), backgroundColor: '#0a7ea4' }]
+  },
+  options: { plugins: { legend: { display: false } } }
+});
+</script>
+{% endblock %}

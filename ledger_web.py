@@ -8,6 +8,7 @@ import json
 import os
 import datetime
 import sqlite3                                # ← 新：数据库模块
+import pandas as pd                           # ← 新：数据分析（第二十二课）
 
 app = Flask(__name__)
 # ❌ 原写法：FILE = "records.json"   # 相对路径 = 从"程序运行目录"找文件
@@ -187,5 +188,21 @@ def migrate_now():
     return f"<h1>✅ 迁移完成：{n} 条记录已导入 ledger.db</h1><p><a href='/'>← 返回记账本</a></p>"
 
 
+# ⑧ 数据分析页：pandas 统计 + Chart.js 图表（第二十三课）
+@app.route("/report")
+def report():
+    conn, cur = db()
+    df = pd.read_sql("SELECT * FROM records", conn)
+    conn.close()
+    if len(df) == 0:
+        return render_template("report.html", cats={}, months={}, total=0, count=0)
+    by_cat = df.groupby("category")["amount"].sum()                      # 分类统计
+    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")      # 字符串 → 真日期 → 纯日期（去掉时间）
+    by_month = df.groupby(df["date"].dt.to_period("M"))["amount"].sum()  # 按月统计
+    return render_template("report.html",
+                           cats=by_cat.to_dict(),
+                           months={str(k): v for k, v in by_month.to_dict().items()},
+                           total=df["amount"].sum(), count=len(df),
+                           records=df.to_dict("records"))   # ← 新增：明细数据（字典列表)
 if __name__ == "__main__":
     app.run()
