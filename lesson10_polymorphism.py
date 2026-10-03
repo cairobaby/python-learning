@@ -48,7 +48,7 @@ class SearchDog(Dog):
         super().__init__(name, age, food)
 
     def work(self):                       # 覆盖：搜救犬的工作不同
-        print(f"{self.name}在搜救失踪人员")
+        print(f"{self.name}正在废墟搜救")
 
     def eat(self):
         print(f"{self.name}在吃{self.food}")        

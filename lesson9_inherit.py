@@ -54,3 +54,4 @@ print("--- 警察犬 ---")
 police_dog.introduce() # 用覆盖后的自我介绍
 police_dog.bark()      # 继承来的方法：照样会叫
 police_dog.patrol()    # 子类独有的技能
+

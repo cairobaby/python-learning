@@ -8,7 +8,11 @@
 </form>
 <h2>消费记录</h2>
 {% for r in records %}
-  <p>{{ r['日期'] }} {{ r['类别'] }} ¥{{ r['金额'] }} {{ r['备注'] }}</p>
+  <div class="record">
+    <span class="rdate">{{ r['日期'] }}</span>
+    <b>{{ r['类别'] }}</b> ¥{{ r['金额'] }}
+    <small>{{ r['备注'] }}</small>
+  </div>
 {% endfor %}
 <p><b>总金额：¥{{ total }}</b></p>
 {% endblock %}

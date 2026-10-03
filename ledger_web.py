@@ -46,12 +46,12 @@ def index():
     # 消费记录列表
     # html += "<h2>消费记录</h2>"     ← 这行原来漏了 #，导致 IndentationError
     # total = 0
-    for i, r in enumerate(records, 1):
-        html += f"<p>{i}. {r.get('日期', '无日期')} {r['类别']} ¥{r['金额']} {r['备注']}</p>"
-        total += r["金额"]
-    html += f"<p><b>总金额：¥{total}</b></p>"
-    html += "<p><a href='/stats'>📊 分类统计</a> | <a href='/budget'>💰 预算检查</a></p>"
-    return html
+    # for i, r in enumerate(records, 1):      ← 旧字符串拼HTML代码（已废弃，全部注释）
+    #     html += f"<p>{i}. {r.get('日期', '无日期')} {r['类别']} ¥{r['金额']} {r['备注']}</p>"
+    #     total += r["金额"]
+    # html += f"<p><b>总金额：¥{total}</b></p>"
+    # html += "<p><a href='/stats'>📊 分类统计</a> | <a href='/budget'>💰 预算检查</a></p>"
+    # return html
 
 # ③ 接收表单：/add 路由，methods=["POST"] 表示"只接受网页提交过来的数据"
 @app.route("/add", methods=["POST"])

@@ -3,7 +3,7 @@
 {% block content %}
 <h2>💰 预算检查</h2>
 {% if total > b %}
-  <p style="color:red">⚠️ 超支！预算 {{ b }}，已花 {{ total }}，超支 {{ total - b }}</p>
+  <p class="over">⚠️ 超支！预算 {{ b }}，已花 {{ total }}，超支 {{ total - b }}</p>
 {% else %}
   <p>✅ 预算还剩：{{ b - total }} 元</p>
 {% endif %}

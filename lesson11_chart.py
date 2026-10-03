@@ -40,19 +40,5 @@ plt.title("图片大小趋势")
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.savefig("chart2.png")
+print("图表已保存：chart2.png")
 
-# ============ 学霸关：仓库语言分布饼图 ============
-import requests
-resp = requests.get("https://api.github.com/users/cairobaby/repos", timeout=20)
-repos = resp.json()
-
-langs = {}
-for repo in repos:
-    lang = repo["language"]
-    langs[lang] = langs.get(lang, 0) + 1     # 统计每种语言数量
-
-plt.figure()
-plt.pie(langs.values(), labels=langs.keys(), autopct="%1.0f%%")   # 饼图+百分比
-plt.title("我的仓库语言分布")
-plt.savefig("chart3.png")
-print("图表已保存：chart3.png")

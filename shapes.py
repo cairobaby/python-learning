@@ -6,7 +6,7 @@ class Circle(Shape):          # 圆形
     def __init__(self, r):    # r = 半径
         self.r = r
     def area(self):           # 覆盖：圆的面积
-        return 3.14 * self.r * self.r
+        return 3.14 * self.r ** 2
 
 class Rect(Shape):            # 长方形
     def __init__(self, w, h):
