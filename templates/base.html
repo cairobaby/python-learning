@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>{% block title %}我的记账本{% endblock %}</title></head>
+<body style="max-width:600px;margin:0 auto;font-family:Microsoft YaHei;">
+  <h1>📒 我的记账本</h1>
+  <p><a href='/'>首页</a> | <a href='/stats'>📊 分类统计</a> | <a href='/budget'>💰 预算检查</a></p>
+  <hr>
+  {% block content %}{% endblock %}     <!-- 子页面往这里填内容 -->
+</body>
+</html>

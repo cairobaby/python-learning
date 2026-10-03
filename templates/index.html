@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" action="/add">
+  类别：<input name="category"><br>
+  金额：<input name="amount"><br>
+  备注：<input name="note"><br>
+  <button>记一笔</button>
+</form>
+<h2>消费记录</h2>
+{% for r in records %}
+  <p>{{ r['日期'] }} {{ r['类别'] }} ¥{{ r['金额'] }} {{ r['备注'] }}</p>
+{% endfor %}
+<p><b>总金额：¥{{ total }}</b></p>
+{% endblock %}

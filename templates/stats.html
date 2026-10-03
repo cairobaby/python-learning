@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}分类统计{% endblock %}
+{% block content %}
+<h2>📊 分类统计</h2>
+{% for cat, total in cats.items() %}
+  <p>{{ cat }}：¥{{ total }}</p>
+{% endfor %}
+{% endblock %}

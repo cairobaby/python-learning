@@ -3,7 +3,7 @@
 # 新知识：表单（POST）+ 接收网页数据（request.form）
 # 数据层直接复用第十三课记账本的 load/save
 
-from flask import Flask, request
+from flask import Flask, request, render_template   
 import json
 import os
 import datetime
@@ -30,18 +30,22 @@ def save(records):
 @app.route("/")
 def index():
     records = load()
+    total = sum(r["金额"] for r in records)          # 算好要显示的数据
+    return render_template("index.html", records=records, total=total)
+#def index():
+    # records = load()
     # 用 f-string 拼出整个网页（"字符串拼 HTML"是 Flask 之前最直观的做法）
-    html = "<h1>📒 我的记账本</h1>"
+    #html = "<h1>📒 我的记账本</h1>"
     # 表单：method='post' 表示"提交到服务器"，action='/add' 表示提交到 /add 网址
-    html += "<form method='post' action='/add'>"
-    html += "类别：<input name='category'><br>"
-    html += "金额：<input name='amount'><br>"
-    html += "备注：<input name='note'><br>"
-    html += "<button>记一笔</button>"
-    html += "</form>"
+    #html += "<form method='post' action='/add'>"
+    #html += "类别：<input name='category'><br>"
+    #html += "金额：<input name='amount'><br>"
+    #html += "备注：<input name='note'><br>"
+    # html += "<button>记一笔</button>"
+    # html += "</form>"# 
     # 消费记录列表
-    html += "<h2>消费记录</h2>"
-    total = 0
+    # html += "<h2>消费记录</h2>"     ← 这行原来漏了 #，导致 IndentationError
+    # total = 0
     for i, r in enumerate(records, 1):
         html += f"<p>{i}. {r.get('日期', '无日期')} {r['类别']} ¥{r['金额']} {r['备注']}</p>"
         total += r["金额"]
@@ -70,31 +74,50 @@ def stats():
     cats = {}
     for r in records:
         cats[r["类别"]] = cats.get(r["类别"], 0) + r["金额"]
-    html = "<h1>📊 分类统计</h1>"
-    for cat, total in cats.items():
-        html += f"<p>{cat}：¥{total}</p>"
-    html += "<p><a href='/'>← 返回记账本</a></p>"
-    return html
+    return render_template("stats.html", cats=cats)
+#@app.route("/stats")
+#def stats():
+   # records = load()
+   # cats = {}
+   # for r in records:
+   #     cats[r["类别"]] = cats.get(r["类别"], 0) + r["金额"]
+   # html = "<h1>📊 分类统计</h1>"
+    #for cat, total in cats.items():
+    #    html += f"<p>{cat}：¥{total}</p>"
+   # html += "<p><a href='/'>← 返回记账本</a></p>"
+    #return html
+# 
+#⑤ 挑战B：预算检查页（复用第十三课的预算逻辑）
+# # @app.route("/budget")
+# def budget():
+#     records = load()
+#     total = sum(r["金额"] for r in records)
+#     try:
+#         # ❌ 原写法：open("budget.txt")   相对路径，部署时同样找不到
+#         # ✅ 正确写法：和 records.json 一样用 BASE 定位
+#         with open(os.path.join(BASE, "budget.txt"), "r", encoding="utf-8") as f:
+#             b = float(f.read().strip())
+#     except (FileNotFoundError, ValueError):
+#         b = 1000
+#     html = "<h1>💰 预算检查</h1>"
+#     if total > b:
+#         html += f"<p style='color:red'>⚠️ 超支！预算 {b}，已花 {total}，超支 {total - b}</p>"
+#     else:
+#         html += f"<p>✅ 预算还剩：{b - total} 元</p>"
+#     html += "<p><a href='/'>← 返回记账本</a></p>"
+    # return html
 
-# ⑤ 挑战B：预算检查页（复用第十三课的预算逻辑）
+# ⑤ 挑战B：预算检查页（模板版）
 @app.route("/budget")
 def budget():
     records = load()
     total = sum(r["金额"] for r in records)
     try:
-        # ❌ 原写法：open("budget.txt")   相对路径，部署时同样找不到
-        # ✅ 正确写法：和 records.json 一样用 BASE 定位
         with open(os.path.join(BASE, "budget.txt"), "r", encoding="utf-8") as f:
             b = float(f.read().strip())
     except (FileNotFoundError, ValueError):
         b = 1000
-    html = "<h1>💰 预算检查</h1>"
-    if total > b:
-        html += f"<p style='color:red'>⚠️ 超支！预算 {b}，已花 {total}，超支 {total - b}</p>"
-    else:
-        html += f"<p>✅ 预算还剩：{b - total} 元</p>"
-    html += "<p><a href='/'>← 返回记账本</a></p>"
-    return html
+    return render_template("budget.html", total=total, b=b)
 
 if __name__ == "__main__":
     app.run()
