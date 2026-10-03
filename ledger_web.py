@@ -165,6 +165,27 @@ def delete(record_id):
     conn.close()
     return "<h1>🗑️ 已删除</h1><p><a href='/'>← 返回记账本</a></p>"
 
+# ⑦ 一次性迁移：把旧 records.json 导入 ledger.db（线上部署用，跑一次后注释掉）
+@app.route("/migrate_now")
+def migrate_now():
+    conn, cur = db()
+    cur.execute("SELECT COUNT(*) FROM records")
+    count = cur.fetchone()[0]
+    if count > 0:
+        conn.close()
+        return f"<h1>数据库已有 {count} 条记录，跳过迁移</h1>"
+    n = 0
+    if os.path.exists(FILE):
+        with open(FILE, "r", encoding="utf-8") as f:
+            records = json.load(f)
+        for r in records:
+            cur.execute("INSERT INTO records (date, category, amount, note) VALUES (?, ?, ?, ?)",
+                        (r.get("日期", ""), r["类别"], r["金额"], r["备注"]))   # .get 防御：早期记录没有"日期"字段
+            n += 1
+        conn.commit()
+    conn.close()
+    return f"<h1>✅ 迁移完成：{n} 条记录已导入 ledger.db</h1><p><a href='/'>← 返回记账本</a></p>"
+
 
 if __name__ == "__main__":
     app.run()
