@@ -22,8 +22,11 @@
   <button style="padding:6px 16px;">查询</button>
 </form>
 
+{% if error %}<p style="color:red;">❌ {{ error }}</p>{% endif %}
+{% if temp %}
 <h2>📍 {{ city }} 当前天气</h2>
 <p style="font-size:20px;">{{ temp }}°C（体感 {{ feels }}°C）· {{ desc }}</p>
+{% endif %}
 <p>湿度 {{ humidity }}% · 风速 {{ wind }}km/h</p>
 
 <h3>未来 3 天预报</h3>

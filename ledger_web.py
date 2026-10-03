@@ -9,6 +9,7 @@ import os
 import datetime
 import sqlite3                                # ← 新：数据库模块
 import pandas as pd                           # ← 新：数据分析（第二十二课）
+import requests                                # ← 新：天气爬虫（第二十六课）
 
 app = Flask(__name__)
 # ❌ 原写法：FILE = "records.json"   # 相对路径 = 从"程序运行目录"找文件
@@ -204,5 +205,34 @@ def report():
                            months={str(k): v for k, v in by_month.to_dict().items()},
                            total=df["amount"].sum(), count=len(df),
                            records=df.to_dict("records"))   # ← 新增：明细数据（字典列表)
+
+# ============ 第二十七课：天气查询（合并进记账本网站） ============
+@app.route("/weather")
+def weather():
+    city = request.args.get("city", "茂名")           # 从网址 ?city= 读城市
+    url = f"https://wttr.in/{city}?format=j1"
+    try:
+        resp = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+    except requests.RequestException:
+        return render_template("weather.html", city=city, error="网络错误，请重试")
+    if resp.status_code != 200:
+        return render_template("weather.html", city=city, error="城市没找到")
+    data = resp.json()                                # 解析 JSON
+    now = data["current_condition"][0]
+    rows = []                                         # pandas 整理 3 天预报
+    for day in data["weather"]:
+        rows.append({"日期": day["date"], "最低温": int(day["mintempC"]),
+                     "最高温": int(day["maxtempC"]),
+                     "天气": day["hourly"][4]["weatherDesc"][0]["value"]})
+    df = pd.DataFrame(rows)
+    return render_template("weather.html", city=city,
+                           temp=now["temp_C"], feels=now["FeelsLikeC"],
+                           desc=now["weatherDesc"][0]["value"],
+                           humidity=now["humidity"], wind=now["windspeedKmph"],
+                           days=df.to_dict("records"),
+                           dates=df["日期"].tolist(),
+                           highs=df["最高温"].tolist(),
+                           lows=df["最低温"].tolist())
+
 if __name__ == "__main__":
     app.run()
