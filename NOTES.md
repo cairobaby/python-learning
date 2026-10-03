@@ -33,7 +33,7 @@
 | 22 | pandas 进阶 | dropna 清洗、按月统计、透视表、导出 Excel |
 | 23 | 网站加图表 | pandas 统计 + tojson 传前端 + Chart.js 画图 |
 | 24 | 爬虫实战 | 爬虫 = 请求 → 响应 → 解析，JSON 嵌套逐层剥 |
-
+| 25 | 记账本 | 杀旧服务器 → 重启 → 刷新 `/report` |
 ## 🔧 常用命令速查（Git）
 
 ```bash
@@ -55,5 +55,6 @@ git log --oneline # 查看提交历史
 > 把你踩过的坑记这里，以后再也不踩第二次
 
 - （例）GitHub 经常连不上，本地提交不会丢，网络恢复再 push 就行
-- 
+- Git 命令必须在仓库文件夹里执行！报 `not a git repository` = 走错文件夹了，先 `cd`
+**Git 是 "就地操作" 的**：必须在仓库文件夹里跑命令。你需要在 `python-learning` 文件夹里执行。
 - 
