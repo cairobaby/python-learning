@@ -1,13 +1,17 @@
-# Python 缓存文件
-__pycache__/
-*.pyc
+# ===== python-learning 仓库 .gitignore =====
+# 规则：被列出的文件/文件夹，Git 自动忽略，不进仓库
 
-# VS Code 设置
-.vscode/
-
-# 虚拟环境
+# 虚拟环境（每个人的电脑不一样，不能进仓库）
 .venv/
 
-# 数据库文件（本地数据不入库，别人 clone 后自己生成）
+# Python 缓存
+__pycache__/
+
+# 运行脚本生成的图片（随时能重新生成）
+*.png
+
+# 数据库文件（数据随时能重新录入）
 *.db
-*.sqlite
+
+# Excel 报表（生成物）
+*.xlsx
