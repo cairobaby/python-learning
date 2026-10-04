@@ -2,7 +2,34 @@
 {% block title %}分类统计{% endblock %}
 {% block content %}
 <h2>📊 分类统计</h2>
-{% for cat, total in cats.items() %}
-  <p>{{ cat }}：¥{{ total }}</p>
-{% endfor %}
+
+<!-- 分类统计卡片 -->
+<div style="display:flex;flex-wrap:wrap;gap:10px;">
+  {% for cat, total in cats.items() %}
+  <div class="record" style="flex:1;min-width:120px;text-align:center;">
+    <b>{{ cat }}</b><br>¥{{ total }}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- 第三十课：每月消费趋势柱状图 -->
+<h3>📈 每月消费趋势</h3>
+<canvas id="monthChart" style="max-width:600px;"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+const months = {{ months | default({}) | tojson }};
+new Chart(document.getElementById('monthChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(months),
+    datasets: [{
+      data: Object.values(months),
+      backgroundColor: '#667eea',
+      borderRadius: 6
+    }]
+  },
+  options: { plugins: { legend: { display: false } } }
+});
+</script>
 {% endblock %}

@@ -114,9 +114,13 @@ def stats():
     conn, cur = db()
     cur.execute("SELECT category, SUM(amount) FROM records GROUP BY category")
     data = cur.fetchall()
+    # ← 第三十课新：每月消费（substr 取日期前7位 = 年月，排除空日期）
+    cur.execute("SELECT substr(date, 1, 7), SUM(amount) FROM records WHERE date != '' GROUP BY substr(date, 1, 7) ORDER BY substr(date, 1, 7)")
+    monthly = cur.fetchall()
     conn.close()
-    cats = {cat: total for cat, total in data}    # 转成模板要的字典
-    return render_template("stats.html", cats=cats)
+    cats = {cat: total for cat, total in data}    # 分类统计（字典）
+    months = {m: total for m, total in monthly}   # 月度统计（字典）
+    return render_template("stats.html", cats=cats, months=months)
     # ❌ 旧版：字典累加（第十四课）
     # records = load()
     # cats = {}
