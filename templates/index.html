@@ -6,6 +6,15 @@
   备注：<input name="note"><br>
   <button>记一笔</button>
 </form>
+
+<!-- 第二十九课：按日期筛选 + 导出 CSV -->
+<form method="get" action="/" style="margin-top:16px;">
+  按日期筛选：<input type="date" name="date" value="{{ date_filter }}">
+  <button>筛选</button>
+  {% if date_filter %}<a href="/" style="margin-left:8px;">✖ 清除筛选</a>{% endif %}
+</form>
+<a href="/export{% if date_filter %}?date={{ date_filter }}{% endif %}" style="font-weight:bold;">📥 导出 CSV</a>
+
 <h2>消费记录</h2>
 {% for r in records %}
   <div class="record">

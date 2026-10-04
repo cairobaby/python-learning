@@ -3,7 +3,7 @@
 # 网页 → Python → 数据库（真实软件架构）
 # 目标：表单记的每一笔直接 INSERT 进 ledger.db，查询用 SELECT
 
-from flask import Flask, request, render_template   
+from flask import Flask, request, render_template, Response   
 import json
 import os
 import datetime
@@ -56,9 +56,17 @@ def load():
 # ② 首页：显示表单 + 消费记录列表
 @app.route("/")
 def index():
-    records = load()
-    total = sum(r["金额"] for r in records)          # 算好要显示的数据
-    return render_template("index.html", records=records, total=total)
+    date_filter = request.args.get("date", "")        # ← 新：从网址 ?date= 读筛选日期
+    if date_filter:                                   # 有筛选日期 → SQL WHERE
+        conn, cur = db()
+        cur.execute("SELECT id, date, category, amount, note FROM records WHERE date = ? ORDER BY id", (date_filter,))
+        rows = cur.fetchall()
+        conn.close()
+        records = [{"id": r[0], "日期": r[1], "类别": r[2], "金额": r[3], "备注": r[4]} for r in rows]
+    else:                                             # 没筛选 → 显示全部
+        records = load()
+    total = sum(r["金额"] for r in records)
+    return render_template("index.html", records=records, total=total, date_filter=date_filter)
 #def index():
     # records = load()
     # 用 f-string 拼出整个网页（"字符串拼 HTML"是 Flask 之前最直观的做法）
@@ -205,6 +213,27 @@ def report():
                            months={str(k): v for k, v in by_month.to_dict().items()},
                            total=df["amount"].sum(), count=len(df),
                            records=df.to_dict("records"))   # ← 新增：明细数据（字典列表)
+
+
+# ============ 第二十九课：导出 CSV（Excel 能打开） ============
+import csv, io
+@app.route("/export")
+def export():
+    date_filter = request.args.get("date", "")        # ← 新：读筛选日期
+    conn, cur = db()
+    if date_filter:                                    # ← 新：有筛选就 WHERE
+        cur.execute("SELECT date, category, amount, note FROM records WHERE date = ? ORDER BY id", (date_filter,))
+    else:                                              # ← 新：没有就全导出
+        cur.execute("SELECT date, category, amount, note FROM records ORDER BY id")
+    rows = cur.fetchall()
+    conn.close()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["日期", "类别", "金额", "备注"])    # 第一行：表头
+    for r in rows:
+        writer.writerow(r)                            # 每笔一行
+    return Response(output.getvalue(), mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=ledger.csv"})
 
 # ============ 第二十七课：天气查询（合并进记账本网站） ============
 @app.route("/weather")
