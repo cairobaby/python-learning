@@ -1,46 +1,100 @@
-/* ============ 记账本样式 ============ */
+/* ============ 第二十八课：记账本+天气网站 现代主题 ============ */
+/* CSS 结构：选择器 { 属性: 值; }   选择器就是"给谁化妆" */
+
+/* ① 全局：页面背景用渐变（从上到下 蓝→紫） */
 body {
-  font-family: "Microsoft YaHei", sans-serif;   /* 字体 */
-  background: #f5f5f5;                          /* 浅灰背景 */
+  font-family: "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   margin: 0;
+  padding: 20px;
+  min-height: 100vh;
 }
+
+/* ② 主卡片：白底 + 大圆角 + 大阴影（浮起来的感觉） */
 .container {
-  max-width: 600px;          /* 内容区最大宽 */
-  margin: 30px auto;         /* 居中 */
-  background: white;         /* 白底卡片 */
-  padding: 25px;             /* 内边距 */
-  border-radius: 12px;       /* 圆角 */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);   /* 阴影 = 卡片浮起来 */
+  max-width: 700px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;                     /* 更圆的角 */
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25); /* 更深阴影 */
 }
-h1 { color: #333; }
+
+/* ③ 标题 */
+h1 { color: #333; text-align: center; margin-top: 0; }
+h2 { color: #444; border-left: 4px solid #667eea; padding-left: 10px; }
+h3 { color: #555; }
+
+/* ④ 导航：居中 + 悬停变色 */
+nav { text-align: center; margin: 14px 0; }
 nav a {
-  color: #0a7ea4;            /* 链接蓝色 */
-  text-decoration: none;     /* 去掉下划线 */
+  color: #0a7ea4;
+  text-decoration: none;
   margin: 0 8px;
+  font-weight: bold;
+  transition: color 0.2s;                  /* 颜色变化过渡动画 */
 }
-nav a:hover { text-decoration: underline; }   /* 鼠标悬停加下划线 */
+nav a:hover { color: #e74c3c; }            /* 悬停变红 */
+
+/* ⑤ 表单控件：输入框/按钮统一圆角 */
 input, button {
   font-size: 14px;
-  padding: 8px;
-  margin: 4px 0;
+  padding: 10px 14px;
+  margin: 6px 0;
   border: 1px solid #ccc;
-  border-radius: 6px;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+input:focus {                              /* 点进输入框时的状态 */
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 6px rgba(102,126,234,0.4);
 }
 button {
-  background: #0a7ea4;       /* 按钮蓝色 */
+  background: linear-gradient(135deg, #667eea, #764ba2);  /* 渐变按钮 */
   color: white;
   border: none;
-  cursor: pointer;           /* 鼠标变小手 */
+  cursor: pointer;
+  transition: transform 0.15s;
 }
-button:hover { background: #08658a; }   /* 悬停变深 */
-p { line-height: 1.6; }
+button:hover { transform: translateY(-2px); }   /* 悬停时按钮微微上浮 */
 
+/* ⑥ 段落 */
+p { line-height: 1.7; color: #555; }
+
+/* ⑦ 记账记录卡片 */
 .record {
-  background: #f9f9f9;
-  border-left: 4px solid #0a7ea4;   /* 左边蓝色条 */
-  padding: 8px 12px;
-  margin: 8px 0;
-  border-radius: 6px;
+  background: #f8f9ff;
+  border-left: 5px solid #667eea;
+  padding: 10px 14px;
+  margin: 10px 0;
+  border-radius: 10px;
+  transition: background 0.2s;
 }
+.record:hover { background: #eef0ff; }    /* 悬停高亮 */
 .rdate { color: #999; font-size: 12px; margin-right: 10px; }
-.over { color: red; font-weight: bold; }   /* 超支用的红色 */
+.over { color: red; font-weight: bold; }
+
+/* ⑧ 表格（统计页/天气页用） */
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 10px;
+}
+td { padding: 10px; border-bottom: 1px solid #eee; }
+tr:hover td { background: #f8f9ff; }       /* 表格行悬停高亮 */
+
+/* ⑨ 天气页快捷城市按钮（小胶囊） */
+.chip {
+  display: inline-block;
+  background: #eef0ff;
+  color: #667eea;
+  padding: 6px 14px;
+  margin: 4px 6px 4px 0;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.chip:hover { background: #667eea; color: white; }
